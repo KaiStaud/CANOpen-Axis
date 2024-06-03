@@ -18,7 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-
+#include "CO_app_STM32.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -62,6 +62,21 @@ static void MX_TIM6_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_TIM3_Init(void);
 /* USER CODE BEGIN PFP */
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+  /* USER CODE BEGIN Callback 0 */
+
+  /* USER CODE END Callback 0 */
+  if (htim->Instance == TIM1) {
+    HAL_IncTick();
+  }
+  /* USER CODE BEGIN Callback 1 */
+  // Handle CANOpen app interrupts
+  if (htim == canopenNodeSTM32->timerHandle) {
+      canopen_app_interrupt();
+  }
+  /* USER CODE END Callback 1 */
+}
 
 /* USER CODE END PFP */
 
@@ -105,13 +120,22 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
-
+  /* USER CODE BEGIN 2 */
+  CANopenNodeSTM32 canOpenNodeSTM32;
+  canOpenNodeSTM32.CANHandle = &hfdcan3;
+  canOpenNodeSTM32.HWInitFunction = MX_FDCAN3_Init;
+  canOpenNodeSTM32.timerHandle = &htim6;
+  canOpenNodeSTM32.desiredNodeID = 29;
+  canOpenNodeSTM32.baudrate = 125;
+  canopen_app_init(&canOpenNodeSTM32);
+  /* USER CODE END 2 */
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	    canopen_app_process();
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
